@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unix's Lament</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Crimson Text', Georgia, serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            position: relative;
+            letter-spacing: -0.5px;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 1px;
+        }
+        
+        .poem-content {
+            line-height: 1.8;
+            color: #34495e;
+        }
+        
+        p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-align: left;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+            position: relative;
+            padding-left: 1rem;
+        }
+        
+        p:nth-child(2) { animation-delay: 0.2s; }
+        p:nth-child(3) { animation-delay: 0.4s; }
+        p:nth-child(4) { animation-delay: 0.6s; }
+        p:nth-child(5) { animation-delay: 0.8s; }
+        p:nth-child(6) { animation-delay: 1.0s; }
+        p:nth-child(7) { animation-delay: 1.2s; }
+        
+        p::before {
+            content: '"';
+            position: absolute;
+            left: -0.5rem;
+            top: -0.2rem;
+            font-size: 3rem;
+            color: #bdc3c7;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+        
+        p:last-child::after {
+            content: '"';
+            font-size: 3rem;
+            color: #bdc3c7;
+            font-family: Georgia, serif;
+            line-height: 1;
+            margin-left: 0.2rem;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        br {
+            line-height: 2;
+        }
+        
+        .hidden-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(52, 73, 94, 0.95);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            max-width: 400px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .hidden-message.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 2rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            p {
+                font-size: 1rem;
+                padding-left: 0.5rem;
+            }
+            
+            p::before {
+                left: -0.3rem;
+                font-size: 2rem;
+            }
+        }
+        
+        /* Subtle hover effects */
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+
+        /* Mobile input field */
+        .mobile-input-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .mobile-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 16px;
+            color: #34495e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-input::placeholder {
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .mobile-input:focus {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Show mobile input only on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-input-container {
+                display: block;
+            }
+            
+            .container {
+                margin-bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Unix's Lament</h1>
+        <div class="poem-content">
+            <p>
+                Through fleeting highs, I tried to dwell,<br>
+                But lost my way, and down I fell,<br>
+                And crashed and burned, no strength to roam,<br>
+                I'm tired, I'm scared, I just want to go home.
+            </p>
+            <p>
+                The streets are strange, the nights feel long,<br>
+                I hum old names like half-lost songs,<br>
+                I reach for hands I used to know...<br>
+                But all that's left is letting go.
+            </p>
+            <p>
+                But dawn still breaks on shattered ground,<br>
+                And somewhere faint, a warmer sound.<br>
+                A voice, a light, a distant friend...<br>
+                A whisper: this won't be the end.
+            </p>
+            <p>
+                So I will walk, though slow, through pain,<br>
+                Through ashes, loss, through cold and rain.<br>
+                My heart still beats. not if, but when,<br>
+                I'll find my way… until we meet again.
+            </p>
+            <p>
+                And now you stand where pathways split:<br>
+                One steeped in comfort's shallow wit -<br>
+                A tea made of twigs, all pleasure and smoke,<br>
+                A fleeting fire that fades when stoked.
+            </p>
+            <p>
+                Or choose the climb, though thorns may bite,<br>
+                Toward truth, toward grace, toward final light.<br>
+                Not ease, but worth; not ease, but story -<br>
+                The road that leads to salvation and glory.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="hidden-message" id="hiddenMessage">
+        <button class="close-button" id="closeButton">&times;</button>
+        <div class="message-content"></div>
+    </div>
+
+    <div class="mobile-input-container">
+        <input type="text" class="mobile-input" placeholder="Reflect on the words..." autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
+    <script>
+        let typed = '';
+        const twigteaMessage = "You've chosen the path of fleeting comfort. The tea is warm, but the fire is fading. I love you, and everything you've done for me. But things don't change, And I'm sorry. Change is what i need.";
+        const salvationMessage = "You've chosen the path of struggle and truth. The climb is arduous, but the light is worth it. Starting fresh, devoid of the worldly. Remember my friends, @im_tenor";
+
+        // Detect if device supports touch
+        const isTouchDevice = () => {
+            return (('ontouchstart' in window) ||
+                   (navigator.maxTouchPoints > 0) ||
+                   (navigator.msMaxTouchPoints > 0));
+        };
+
+        function showMessage(message) {
+            const messageEl = document.getElementById('hiddenMessage');
+            const overlayEl = document.getElementById('modalOverlay');
+            const messageContent = messageEl.querySelector('.message-content');
+            const closeButton = document.getElementById('closeButton');
+            
+            messageContent.textContent = message;
+            messageEl.classList.add('show');
+            overlayEl.classList.add('show');
+            
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+            
+            function closeModal() {
+                messageEl.classList.remove('show');
+                overlayEl.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            
+            // Close on button click
+            closeButton.onclick = closeModal;
+            
+            // Close on overlay click
+            overlayEl.onclick = closeModal;
+            
+            // Close on Escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+            
+            // Auto-close after 10 seconds if not manually closed
+            setTimeout(() => {
+                if (messageEl.classList.contains('show')) {
+                    closeModal();
+                }
+            }, 10000);
+        }
+
+        function checkKeywords(inputText) {
+            const text = inputText.toLowerCase().trim();
+            
+            // Check for twigtea (unchanged)
+            if (text.includes('twigtea')) {
+                showMessage(twigteaMessage);
+                return true;
+            }
+            
+            // More specific salvation checking
+            // Remove common punctuation and normalize spaces
+            const normalizedText = text.replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ');
+            
+            // Check for exact salvation phrases
+            if (normalizedText === 'salvation' || 
+                normalizedText === 'i choose salvation' ||
+                normalizedText.includes('i choose salvation')) {
+                showMessage(salvationMessage);
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Desktop keyboard listener
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+
+            // Only add single, visible characters to the string, ignoring spaces and other keys
+            if (key.length === 1) {
+                typed += key;
+            }
+
+            // Check for twigtea (unchanged)
+            if (typed.replace(/\s/g, '').endsWith('twigtea')) {
+                showMessage(twigteaMessage);
+                typed = ''; 
+            }
+            
+            // Check for salvation phrases in the typed string
+            const normalizedTyped = typed.toLowerCase().replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ').trim();
+            if (normalizedTyped.endsWith('salvation') || 
+                normalizedTyped.includes('i choose salvation')) {
+                showMessage(salvationMessage);
+                typed = '';
+            }
+
+            // Keep the string from growing too long
+            if (typed.length > 30) {
+                typed = typed.slice(-15);
+            }
+        });
+
+        // Mobile input listener
+        if (isTouchDevice()) {
+            const mobileInput = document.querySelector('.mobile-input');
+            if (mobileInput) {
+                let debounceTimer;
+                
+                mobileInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        if (checkKeywords(e.target.value)) {
+                            // Clear input after a short delay if keyword found
+                            setTimeout(() => {
+                                e.target.value = '';
+                            }, 1000);
+                        }
+                    }, 300);
+                });
+                
+                // Also check on blur (when user finishes typing)
+                mobileInput.addEventListener('blur', (e) => {
+                    if (checkKeywords(e.target.value)) {
+                        setTimeout(() => {
+                            e.target.value = '';
+                        }, 1000);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
